@@ -158,6 +158,9 @@ Open [http://localhost:8081](http://localhost:8081) and browse:
 │   ├── producer.py
 │   ├── consumer.py
 │   └── requirements.txt
+├── scripts/
+│   ├── load_test.py
+│   └── requirements.txt
 └── docs/
     ├── 01-kafka-basics.md
     ├── 02-architecture.md
@@ -171,6 +174,40 @@ If you are new to Kafka, follow the guides in order:
 1. [01 - Kafka Basics (Thai)](docs/01-kafka-basics.md)
 2. [02 - Architecture](docs/02-architecture.md)
 3. [03 - Lessons Learned](docs/03-lessons-learned.md)
+
+## Load Testing
+
+A simple Python load test script is included in `scripts/load_test.py`.
+
+```bash
+# Install dependencies
+pip install -r scripts/requirements.txt
+
+# Run 1000 requests with 50 concurrent workers
+python scripts/load_test.py -n 1000 -c 50
+```
+
+Sample output:
+
+```text
+Target: http://localhost:8000/call
+Requests: 1000, Concurrency: 50, Timeout: 10s
+--------------------------------------------------
+Duration:    12.34 s
+Total:       1000
+Success:     1000
+Failed:      0
+RPS:         81.03
+Min latency: 23.45 ms
+Avg latency: 45.67 ms
+Max latency: 123.45 ms
+P95 latency: 78.90 ms
+--------------------------------------------------
+Tip: watch consumer lag in Kafka UI at http://localhost:8081
+```
+
+> This setup is for learning. The gateway currently uses a single Uvicorn
+> worker and synchronous Kafka sends, so it is not tuned for maximum throughput.
 
 ## Common Commands
 
