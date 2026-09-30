@@ -1,17 +1,44 @@
-# Kafka Gateway with Docker Compose
+# Kafka Learning Lab
 
-> โปรเจกต์นี้สร้าง Kafka messaging layer ด้วย Docker Compose พร้อมตัวอย่าง Gateway (FastAPI) และ Worker Service เพื่อให้เห็นการใช้งาน Kafka เป็นด่านหน้าในการเรียก service ผ่านข้อความ
+> A minimal event-driven gateway built with Apache Kafka, FastAPI, and Docker Compose.
+> This project was created as a hands-on learning lab to understand Kafka's log-based
+> messaging model after coming from a RabbitMQ background.
 >
-> Learning materials in Thai are available under [`docs/`](docs/).
+> เอกสารการเรียนรู้แบบ Step-by-step ภาษาไทยอยู่ใน [`docs/`](docs/).
 
-## What is this?
+## About
 
-A minimal event-driven gateway built on Kafka:
+This repository sets up a small Kafka-based messaging system:
 
-- **HTTP Gateway** accepts requests via `POST /call` and publishes them to a Kafka topic.
-- **Worker Service** consumes the topic, processes the message, and writes a response back to another topic.
-- **Kafka UI** lets you inspect topics, messages, partitions and consumer groups.
-- Everything runs in Docker Compose for a single-command setup.
+- An **HTTP Gateway** (FastAPI) receives requests via `POST /call` and publishes them to a Kafka topic.
+- A **Worker Service** consumes the topic, processes the message, and writes a response back to another topic.
+- **Kafka UI** provides a web interface to inspect topics, messages, partitions and consumer groups.
+- Everything runs locally with a single `docker compose up` command.
+
+The goal is to learn core Kafka concepts — topics, partitions, offsets, consumer groups,
+and advertised listeners — by running real code instead of only reading documentation.
+
+## Motivation
+
+I had used RabbitMQ before and wanted to understand how Kafka differs. RabbitMQ feels like
+queues with exchanges and routing, while Kafka feels like a distributed append-only log.
+This project helped me compare the two directly and understand when to choose one over the other.
+
+Key questions I wanted to answer:
+
+- How does message persistence and replay work in Kafka?
+- What is the difference between a queue and a consumer group?
+- How do partitions and offsets affect ordering and parallelism?
+- How do you connect to Kafka from inside Docker vs. from the host machine?
+
+## What I Learned
+
+- **Kafka is a log, not a queue**: messages are persisted and can be replayed by any consumer group.
+- **Ordering is per-partition**: messages inside one partition are ordered; across partitions they are not.
+- **Consumer groups share partitions**: multiple consumers in the same group split the partitions. Separate groups read independently.
+- **Listeners matter**: services inside Docker connect to `broker:29092`, while the host machine uses `localhost:9092`.
+- **Health checks need care**: `producer.bootstrap_connected()` can return `false` after an idle timeout even though the producer reconnects automatically. I changed the gateway to use `producer.partitions_for(topic)` for a more reliable check.
+- **Python client trade-offs**: `kafka-python-ng` is easy to set up for learning, but `confluent-kafka-python` is better for production throughput.
 
 ## Tech Stack
 
@@ -21,6 +48,7 @@ A minimal event-driven gateway built on Kafka:
 - Python + `kafka-python-ng` (Worker & examples)
 - Docker & Docker Compose
 - Kafka UI (`provectuslabs/kafka-ui`)
+- GitHub Actions (CI validation)
 
 ## Architecture
 
@@ -175,7 +203,3 @@ This is configured by `KAFKA_ADVERTISED_LISTENERS` in `docker-compose.yml`.
 - Add Kafka Streams or ksqlDB for stream processing
 - Add multiple Kafka brokers for real HA
 - Switch Python gateway/worker to `confluent-kafka-python` for higher throughput
-
-## License
-
-MIT
